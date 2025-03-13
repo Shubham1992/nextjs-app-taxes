@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 
+const SUGGESTED_QUESTIONS = [
+  "How do I calculate my income tax for FY 2024-25?",
+  "What are the tax benefits under Section 80C?",
+  "How to file ITR for freelancers?",
+  "What is the new tax regime vs old tax regime?"
+];
+
 export default function Home() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat();
   const [currentFile, setCurrentFile] = useState<{ name: string; type: string } | null>(null);
@@ -121,6 +128,10 @@ export default function Home() {
     handleSubmit(e);
   };
 
+  const handleSuggestedQuestion = (question: string) => {
+    handleInputChange({ target: { value: question } } as React.ChangeEvent<HTMLInputElement>);
+  };
+
   return (
     <div className="container flex-1 items-center justify-center md:py-10">
       <Card className="w-full max-w-3xl mx-auto h-[calc(100vh-8rem)]">
@@ -138,7 +149,19 @@ export default function Home() {
                   <p className="text-muted-foreground max-w-sm">
                     Ask me anything about Indian taxes! I can help with income tax, GST, and more.
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-2xl mt-4">
+                    {SUGGESTED_QUESTIONS.map((question, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        className="h-auto py-2 px-4 text-left text-sm"
+                        onClick={() => handleSuggestedQuestion(question)}
+                      >
+                        {question}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-4">
                     Upload your tax documents (Form 16, ITR, etc.) for specific guidance.
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -149,36 +172,40 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="border-t p-4 space-y-4">
-            <FileUpload
-              onFileSelect={handleFileSelect}
-              onFileRemove={handleFileRemove}
-              acceptedFileTypes=".pdf,.jpg,.jpeg,.png,.txt"
-            />
-            <form onSubmit={handleFormSubmit} className="flex gap-2">
-              <Input
-                value={input}
-                onChange={handleInputChange}
-                placeholder={currentFile 
-                  ? "Ask questions about the uploaded document..."
-                  : "Ask about Indian taxes..."}
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    <span>Processing...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Send className="h-4 w-4" />
-                    <span>Send</span>
-                  </div>
-                )}
-              </Button>
-            </form>
+          <div className="border-t p-4">
+            <div className="flex gap-4">
+              <div className="w-48">
+                <FileUpload
+                  onFileSelect={handleFileSelect}
+                  onFileRemove={handleFileRemove}
+                  acceptedFileTypes=".pdf,.jpg,.jpeg,.png,.txt"
+                />
+              </div>
+              <form onSubmit={handleFormSubmit} className="flex-1 flex gap-2">
+                <Input
+                  value={input}
+                  onChange={handleInputChange}
+                  placeholder={currentFile 
+                    ? "Ask questions about the uploaded document..."
+                    : "Ask about Indian taxes..."}
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      <span>Processing...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Send className="h-4 w-4" />
+                      <span>Send</span>
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </Card>

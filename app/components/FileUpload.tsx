@@ -59,7 +59,7 @@ export default function FileUpload({ onFileSelect, onFileRemove, acceptedFileTyp
         <label
           htmlFor="file-upload"
           className={cn(
-            "flex flex-col items-center justify-center w-full h-32 px-4 transition border-2 border-dashed rounded-lg cursor-pointer",
+            "flex items-center justify-center w-full h-10 px-2 transition border-2 border-dashed rounded-lg cursor-pointer",
             dragActive 
               ? "border-primary" 
               : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -69,13 +69,10 @@ export default function FileUpload({ onFileSelect, onFileRemove, acceptedFileTyp
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
-          <div className="flex flex-col items-center justify-center pt-5 pb-6 space-y-2">
-            <Upload className="h-6 w-6 text-muted-foreground" />
+          <div className="flex items-center space-x-2">
+            <Upload className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium">Click to upload</span> or drag and drop
-            </p>
-            <p className="text-xs text-muted-foreground/75">
-              PDF, JPG, JPEG, or PNG files
+              Upload file
             </p>
           </div>
           <input
@@ -87,10 +84,10 @@ export default function FileUpload({ onFileSelect, onFileRemove, acceptedFileTyp
           />
         </label>
       ) : (
-        <Card className="flex items-center justify-between p-4">
+        <Card className="flex items-center justify-between p-2 h-10">
           <div className="flex items-center space-x-2">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm truncate max-w-[200px]">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm truncate max-w-[120px]">
               {selectedFile.name}
             </span>
           </div>
