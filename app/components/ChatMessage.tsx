@@ -3,6 +3,10 @@ import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
+import { GeistMono } from 'geist/font/mono';
+import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
+import { Bot, User } from "lucide-react";
 
 interface ContentBlock {
   type: 'text' | 'image' | 'document';
@@ -23,33 +27,33 @@ const formatTextWithNumbers = (text: string) => {
 
 const MarkdownComponents: Partial<Components> = {
   h1: ({ children }) => (
-    <h1 className="text-2xl font-bold mb-4 text-gray-800" dangerouslySetInnerHTML={{ 
+    <h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
   h2: ({ children }) => (
-    <h2 className="text-xl font-semibold mb-3 text-gray-800" dangerouslySetInnerHTML={{ 
+    <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
   h3: ({ children }) => (
-    <h3 className="text-lg font-medium mb-2 text-gray-800" dangerouslySetInnerHTML={{ 
+    <h3 className="scroll-m-20 text-lg font-medium tracking-tight mb-2" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
   p: ({ children }) => (
-    <p className="mb-4 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ 
+    <p className="leading-7 mb-4" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
   ul: ({ children }) => (
-    <ul className="list-disc list-inside mb-4 space-y-2 text-gray-700">{children}</ul>
+    <ul className="my-6 ml-6 list-disc space-y-2">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal list-inside mb-4 space-y-2 text-gray-700">{children}</ol>
+    <ol className="my-6 ml-6 list-decimal space-y-2">{children}</ol>
   ),
   li: ({ children }) => (
-    <li className="ml-4" dangerouslySetInnerHTML={{ 
+    <li className="mt-2" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
@@ -58,8 +62,11 @@ const MarkdownComponents: Partial<Components> = {
     return (
       <code
         className={cn(
-          "px-1.5 py-0.5 rounded font-mono text-sm",
-          isInline ? "bg-gray-100" : "block bg-gray-50 p-4 my-4"
+          GeistMono.className,
+          "relative rounded text-sm",
+          isInline 
+            ? "bg-muted px-[0.3rem] py-[0.2rem]" 
+            : "block bg-muted px-4 py-3 my-4"
         )}
       >
         {children}
@@ -67,28 +74,26 @@ const MarkdownComponents: Partial<Components> = {
     );
   },
   table: ({ children }) => (
-    <div className="overflow-x-auto my-4">
-      <table className="min-w-full divide-y divide-gray-200">
-        {children}
-      </table>
+    <div className="my-6 w-full overflow-y-auto">
+      <table className="w-full">{children}</table>
     </div>
   ),
   th: ({ children }) => (
-    <th className="px-4 py-2 bg-gray-50 text-left text-sm font-semibold text-gray-700" dangerouslySetInnerHTML={{ 
+    <th className="border px-4 py-2 text-left font-bold" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
   td: ({ children }) => (
-    <td className="px-4 py-2 text-sm text-gray-700 border-t" dangerouslySetInnerHTML={{ 
+    <td className="border px-4 py-2" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-blue-200 pl-4 my-4 italic text-gray-700" dangerouslySetInnerHTML={{ 
+    <blockquote className="mt-6 border-l-2 pl-6 italic" dangerouslySetInnerHTML={{ 
       __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
     }} />
   ),
-  hr: () => <hr className="my-6 border-gray-200" />,
+  hr: () => <hr className="my-4 md:my-8" />,
 };
 
 export default function ChatMessage({ message }: { message: Message }) {
@@ -133,23 +138,23 @@ export default function ChatMessage({ message }: { message: Message }) {
   };
 
   return (
-    <div
-      className={cn(
-        'flex w-full items-start gap-4 rounded-lg px-4 py-3',
-        isUser ? 'bg-blue-50' : 'bg-gray-50'
-      )}
-    >
-      <div
-        className={cn(
-          'rounded-full p-2 text-sm font-medium flex items-center justify-center h-8 w-8',
-          isUser ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-800'
+    <Card className={cn(
+      'flex w-full items-start gap-4 p-4',
+      isUser ? 'bg-muted/50' : 'bg-background'
+    )}>
+      <Avatar className={cn(
+        'h-8 w-8',
+        isUser ? 'bg-primary' : 'bg-muted'
+      )}>
+        {isUser ? (
+          <User className="h-4 w-4" />
+        ) : (
+          <Bot className="h-4 w-4" />
         )}
-      >
-        {isUser ? 'You' : 'AI'}
-      </div>
-      <div className="flex-1 space-y-2 overflow-x-auto">
+      </Avatar>
+      <div className="flex-1 space-y-2 overflow-hidden">
         {renderContent(message.content as MessageContent)}
       </div>
-    </div>
+    </Card>
   );
 } 

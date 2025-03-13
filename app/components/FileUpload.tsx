@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { XMarkIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, X, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -55,19 +58,23 @@ export default function FileUpload({ onFileSelect, onFileRemove, acceptedFileTyp
       {!selectedFile ? (
         <label
           htmlFor="file-upload"
-          className={`flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer ${
-            dragActive ? "border-blue-500" : "border-gray-300"
-          } hover:border-gray-400`}
+          className={cn(
+            "flex flex-col items-center justify-center w-full h-32 px-4 transition border-2 border-dashed rounded-lg cursor-pointer",
+            dragActive 
+              ? "border-primary" 
+              : "border-muted-foreground/25 hover:border-muted-foreground/50"
+          )}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <p className="mb-2 text-sm text-gray-500">
-              <span className="font-semibold">Click to upload</span> or drag and drop
+          <div className="flex flex-col items-center justify-center pt-5 pb-6 space-y-2">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium">Click to upload</span> or drag and drop
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground/75">
               PDF, JPG, JPEG, or PNG files
             </p>
           </div>
@@ -80,20 +87,22 @@ export default function FileUpload({ onFileSelect, onFileRemove, acceptedFileTyp
           />
         </label>
       ) : (
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <Card className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-2">
-            <DocumentIcon className="h-6 w-6 text-gray-500" />
-            <span className="text-sm text-gray-700 truncate">
+            <FileText className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm truncate max-w-[200px]">
               {selectedFile.name}
             </span>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={removeFile}
-            className="p-1 rounded-full hover:bg-gray-200"
+            className="h-8 w-8"
           >
-            <XMarkIcon className="h-5 w-5 text-gray-500" />
-          </button>
-        </div>
+            <X className="h-4 w-4" />
+          </Button>
+        </Card>
       )}
     </div>
   );

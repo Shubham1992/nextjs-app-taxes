@@ -4,6 +4,10 @@ import { useChat } from 'ai/react';
 import ChatMessage from './components/ChatMessage';
 import FileUpload from './components/FileUpload';
 import { useState, useRef, useEffect } from 'react';
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
 
 export default function Home() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat();
@@ -118,67 +122,66 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-white">
-      <div className="w-full max-w-3xl h-screen flex flex-col">
-        <h1 className="text-3xl font-bold text-center py-4 text-gray-800 bg-white">
-          Indian Tax Assistant
-        </h1>
-        
-        {/* Chat messages container with fixed height and scrolling */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
-          <div className="flex flex-col gap-2">
-            {messages.map((message, i) => (
-              <ChatMessage key={i} message={message} />
-            ))}
-            <div ref={messagesEndRef} /> {/* Scroll anchor */}
-            
-            {messages.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                Ask me anything about Indian taxes! I can help with income tax, GST, and more.
-                <br />
-                Upload your tax documents (Form 16, ITR, etc.) for specific guidance.
-                <br />
-                <span className="text-xs mt-2 block">
-                  Note: For PDFs and images, you&apos;ll need to copy-paste the relevant content if automatic parsing fails.
-                </span>
-              </div>
-            )}
+    <div className="container flex-1 items-center justify-center md:py-10">
+      <Card className="w-full max-w-3xl mx-auto h-[calc(100vh-8rem)]">
+        <div className="flex h-full flex-col">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex flex-col gap-4">
+              {messages.map((message, i) => (
+                <ChatMessage key={i} message={message} />
+              ))}
+              <div ref={messagesEndRef} />
+              
+              {messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                  <h2 className="text-2xl font-bold">Welcome to AI Tax Assistant</h2>
+                  <p className="text-muted-foreground max-w-sm">
+                    Ask me anything about Indian taxes! I can help with income tax, GST, and more.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Upload your tax documents (Form 16, ITR, etc.) for specific guidance.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Note: For PDFs and images, you&apos;ll need to copy-paste the relevant content if automatic parsing fails.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Fixed input form at bottom */}
-        <div className="border-t bg-white">
-          <form
-            onSubmit={handleFormSubmit}
-            className="p-4 space-y-3"
-          >
+          <div className="border-t p-4 space-y-4">
             <FileUpload
               onFileSelect={handleFileSelect}
               onFileRemove={handleFileRemove}
               acceptedFileTypes=".pdf,.jpg,.jpeg,.png,.txt"
             />
-            <div className="flex gap-4">
-              <input
-                type="text"
+            <form onSubmit={handleFormSubmit} className="flex gap-2">
+              <Input
                 value={input}
                 onChange={handleInputChange}
                 placeholder={currentFile 
                   ? "Ask questions about the uploaded document..."
                   : "Ask about Indian taxes..."}
-                className="flex-1 rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:outline-none"
                 disabled={isLoading}
+                className="flex-1"
               />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-              >
-                {isLoading ? 'Thinking...' : 'Send'}
-              </button>
-            </div>
-          </form>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    <span>Send</span>
+                  </div>
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
-      </div>
-    </main>
+      </Card>
+    </div>
   );
 } 
