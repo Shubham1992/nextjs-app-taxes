@@ -1,55 +1,81 @@
 import { Anthropic } from '@anthropic-ai/sdk';
-import { Message } from 'ai';
-import { StreamingTextResponse, experimental_StreamData } from 'ai';
-
-interface ContentBlock {
-  type: 'text' | 'image' | 'document';
-  text?: string;
-  source?: {
-    type: 'base64';
-    media_type: string;
-    data: string;
-  };
-}
-
-type CustomMessage = Omit<Message, 'content'> & {
-  content: string | ContentBlock[];
-};
+import { Message, StreamingTextResponse } from 'ai';
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
-  
-  const systemMessage = `You are a helpful tax assistant specializing in Indian taxation. You help users understand their tax documents, calculate taxes, and provide guidance on tax-related matters. You can analyze tax documents like Form 16, ITR forms, and other financial documents. Always be clear and precise in your explanations.`;
 
-  // Convert messages to Anthropic's format
-  const formattedMessages = messages.map((msg: CustomMessage) => {
-    if (typeof msg.content === 'string') {
-      return {
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      };
+  const systemMessage = {
+    role: 'system',
+    content: "You are a knowledgeable tax assistant specializing in Indian taxation. You help users understand their tax obligations, calculate taxes, and provide guidance on tax-related documents. When analyzing documents, provide clear explanations and actionable insights."
+  };
+
+  // Extract file data if present in the last message
+  const lastMessage = messages[messages.length - 1];
+  let fileData = null;
+  
+  try {
+    const content = JSON.parse(lastMessage.content);
+    if (Array.isArray(content)) {
+      const fileBlock = content.find(block => block.type === 'document' || block.type === 'image');
+      if (fileBlock?.source?.data) {
+        fileData = {
+          type: fileBlock.source.media_type,
+          data: fileBlock.source.data
+        };
+      }
     }
-    
-    // Handle array content (for files)
-    return {
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.content
-    };
+  } catch {
+    // Not JSON content, continue with text-only message
+  }
+
+  // Filter out previous messages containing file data
+  const previousMessages = messages.slice(0, -1).map((msg: Message) => {
+    try {
+      const content = JSON.parse(msg.content);
+      if (Array.isArray(content)) {
+        // If it's a file upload message, only keep the text part
+        const textBlock = content.find(block => block.type === 'text');
+        return {
+          role: msg.role,
+          content: textBlock?.text || msg.content
+        };
+      }
+    } catch {
+      // Not JSON content, keep as is
+    }
+    return msg;
   });
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-3-5-haiku-20241022',
     max_tokens: 4096,
-    system: systemMessage,
-    messages: formattedMessages,
+    temperature: 0.7,
+    system: systemMessage.content,
+    messages: [
+      ...previousMessages,
+      {
+        role: lastMessage.role,
+        content: fileData ? [
+          { type: "text", text: lastMessage.content },
+          {
+            type: fileData.type.startsWith('image/') ? "image" : "document",
+            source: {
+              type: "base64",
+              media_type: fileData.type,
+              data: fileData.data
+            }
+          }
+        ] : lastMessage.content
+      }
+    ],
     stream: true
   });
 
-  // Convert the response into a friendly stream
+  // Convert the response into a streaming response
   const stream = new ReadableStream({
     async start(controller) {
       for await (const chunk of response) {
@@ -58,14 +84,8 @@ export async function POST(req: Request) {
         }
       }
       controller.close();
-    },
+    }
   });
 
-  const data_store = new experimental_StreamData();
-  
-  return new StreamingTextResponse(stream, {
-    headers: {
-      'X-Data': JSON.stringify(data_store),
-    },
-  });
+  return new StreamingTextResponse(stream);
 } 

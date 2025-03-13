@@ -1,5 +1,8 @@
 import { Message } from 'ai';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { Components } from 'react-markdown';
 
 interface ContentBlock {
   type: 'text' | 'image' | 'document';
@@ -11,76 +14,122 @@ interface ContentBlock {
   };
 }
 
-type CustomMessage = Omit<Message, 'content'> & {
-  content: string | ContentBlock[];
+type MessageContent = string | ContentBlock[];
+
+// Function to wrap numbers in a medium font weight span
+const formatTextWithNumbers = (text: string) => {
+  return text.replace(/(\d+(?:\.\d+)?)/g, '<span class="font-medium">$1</span>');
 };
 
-export default function ChatMessage({ message }: { message: CustomMessage }) {
+const MarkdownComponents: Partial<Components> = {
+  h1: ({ children }) => (
+    <h1 className="text-2xl font-bold mb-4 text-gray-800" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-xl font-semibold mb-3 text-gray-800" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-lg font-medium mb-2 text-gray-800" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  p: ({ children }) => (
+    <p className="mb-4 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-inside mb-4 space-y-2 text-gray-700">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-inside mb-4 space-y-2 text-gray-700">{children}</ol>
+  ),
+  li: ({ children }) => (
+    <li className="ml-4" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  code: ({ className, children }) => {
+    const isInline = !className?.includes('language-');
+    return (
+      <code
+        className={cn(
+          "px-1.5 py-0.5 rounded font-mono text-sm",
+          isInline ? "bg-gray-100" : "block bg-gray-50 p-4 my-4"
+        )}
+      >
+        {children}
+      </code>
+    );
+  },
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-4">
+      <table className="min-w-full divide-y divide-gray-200">
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="px-4 py-2 bg-gray-50 text-left text-sm font-semibold text-gray-700" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  td: ({ children }) => (
+    <td className="px-4 py-2 text-sm text-gray-700 border-t" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-blue-200 pl-4 my-4 italic text-gray-700" dangerouslySetInnerHTML={{ 
+      __html: typeof children === 'string' ? formatTextWithNumbers(children) : String(children) 
+    }} />
+  ),
+  hr: () => <hr className="my-6 border-gray-200" />,
+};
+
+export default function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === 'user';
 
-  // Function to format text with enhanced typography
-  const formatText = (text: string) => {
-    // Split text into segments while preserving whitespace
-    return text.split(/(\s+|\d+(?:,\d+)*(?:\.\d+)?|\n)/).map((segment, index) => {
-      // Check if segment is a number (including decimals and thousands separators)
-      if (/^\d+(?:,\d+)*(?:\.\d+)?$/.test(segment)) {
-        return (
-          <span key={index} className="font-medium text-gray-900">
-            {segment}
-          </span>
-        );
-      }
-      // Handle newlines
-      if (segment === '\n') {
-        return <br key={index} />;
-      }
-      // Handle whitespace
-      if (/^\s+$/.test(segment)) {
-        return <span key={index}>{segment}</span>;
-      }
-      // Check for percentage patterns
-      if (/^\d+(?:\.\d+)?%$/.test(segment)) {
-        return (
-          <span key={index} className="font-medium text-gray-900">
-            {segment}
-          </span>
-        );
-      }
-      // Check for currency patterns (₹, $, €)
-      if (/^[₹$€]\d+(?:,\d+)*(?:\.\d+)?$/.test(segment)) {
-        return (
-          <span key={index} className="font-medium text-gray-900">
-            {segment}
-          </span>
-        );
-      }
-      // Regular text
-      return <span key={index}>{segment}</span>;
-    });
-  };
-
   // Function to render content based on its type
-  const renderContent = (content: string | ContentBlock[]) => {
+  const renderContent = (content: MessageContent) => {
     if (typeof content === 'string') {
       return (
         <div className="prose prose-sm max-w-none">
-          {formatText(content)}
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={MarkdownComponents}
+          >
+            {content}
+          </ReactMarkdown>
         </div>
       );
     }
 
-    // For array content, render only the text parts
-    return (
-      <div className="prose prose-sm max-w-none">
-        {content
-          .filter(block => block.type === 'text')
-          .map((block, index) => (
-            <div key={index}>
-              {block.text && formatText(block.text)}
-            </div>
-          ))}
-      </div>
-    );
+    if (Array.isArray(content)) {
+      // For array content, render only the text parts
+      return (
+        <div className="prose prose-sm max-w-none">
+          {content
+            .filter((block: ContentBlock) => block.type === 'text')
+            .map((block: ContentBlock, index: number) => (
+              <div key={index}>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={MarkdownComponents}
+                >
+                  {block.text || ''}
+                </ReactMarkdown>
+              </div>
+            ))}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -92,14 +141,14 @@ export default function ChatMessage({ message }: { message: CustomMessage }) {
     >
       <div
         className={cn(
-          'rounded-full p-1.5 text-xs font-medium',
-          isUser ? 'bg-blue-200' : 'bg-gray-200'
+          'rounded-full p-2 text-sm font-medium flex items-center justify-center h-8 w-8',
+          isUser ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-800'
         )}
       >
         {isUser ? 'You' : 'AI'}
       </div>
-      <div className="flex-1 space-y-2">
-        {renderContent(message.content)}
+      <div className="flex-1 space-y-2 overflow-x-auto">
+        {renderContent(message.content as MessageContent)}
       </div>
     </div>
   );

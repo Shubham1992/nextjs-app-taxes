@@ -1,28 +1,22 @@
 'use client';
 
-import { Message } from '@/types/chat';
 import { useChat } from 'ai/react';
 import ChatMessage from './components/ChatMessage';
 import FileUpload from './components/FileUpload';
-import { useState } from 'react';
-
-interface ContentBlock {
-  type: 'text' | 'image' | 'document';
-  text?: string;
-  source?: {
-    type: 'base64';
-    media_type: string;
-    data: string;
-  };
-}
-
-interface CustomMessage extends Message {
-  content: string | ContentBlock[];
-}
+import { useState, useRef, useEffect } from 'react';
 
 export default function Home() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat();
   const [currentFile, setCurrentFile] = useState<{ name: string; type: string } | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleFileSelect = async (file: File) => {
     setCurrentFile({ name: file.name, type: file.type });
@@ -37,9 +31,9 @@ export default function Home() {
             .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         
-        await (append as (message: CustomMessage) => void)({
+        await append({
           role: 'user',
-          content: [
+          content: JSON.stringify([
             {
               type: 'text',
               text: `I'm uploading a PDF file named "${file.name}" for analysis.`
@@ -52,7 +46,7 @@ export default function Home() {
                 data: base64Data
               }
             }
-          ]
+          ])
         });
         return;
       }
@@ -64,9 +58,9 @@ export default function Home() {
             .reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
         
-        await (append as (message: CustomMessage) => void)({
+        await append({
           role: 'user',
-          content: [
+          content: JSON.stringify([
             {
               type: 'text',
               text: `I'm uploading an image file named "${file.name}" for analysis.`
@@ -79,7 +73,7 @@ export default function Home() {
                 data: base64Data
               }
             }
-          ]
+          ])
         });
         return;
       }
@@ -124,35 +118,40 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 bg-white">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+    <main className="flex min-h-screen flex-col items-center bg-white">
+      <div className="w-full max-w-3xl h-screen flex flex-col">
+        <h1 className="text-3xl font-bold text-center py-4 text-gray-800 bg-white">
           Indian Tax Assistant
         </h1>
         
-        <div className="flex flex-col gap-2 pb-32">
-          {messages.map((message: Message, i: number) => (
-            <ChatMessage key={i} message={message} />
-          ))}
-          
-          {messages.length === 0 && (
-            <div className="text-center text-gray-500 py-8">
-              Ask me anything about Indian taxes! I can help with income tax, GST, and more.
-              <br />
-              Upload your tax documents (Form 16, ITR, etc.) for specific guidance.
-              <br />
-              <span className="text-xs mt-2 block">
-                Note: For PDFs and images, you&apos;ll need to copy-paste the relevant content if automatic parsing fails.
-              </span>
-            </div>
-          )}
+        {/* Chat messages container with fixed height and scrolling */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="flex flex-col gap-2">
+            {messages.map((message, i) => (
+              <ChatMessage key={i} message={message} />
+            ))}
+            <div ref={messagesEndRef} /> {/* Scroll anchor */}
+            
+            {messages.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                Ask me anything about Indian taxes! I can help with income tax, GST, and more.
+                <br />
+                Upload your tax documents (Form 16, ITR, etc.) for specific guidance.
+                <br />
+                <span className="text-xs mt-2 block">
+                  Note: For PDFs and images, you&apos;ll need to copy-paste the relevant content if automatic parsing fails.
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <form
-          onSubmit={handleFormSubmit}
-          className="fixed bottom-0 w-full max-w-3xl bg-white p-4 border-t"
-        >
-          <div className="space-y-3">
+        {/* Fixed input form at bottom */}
+        <div className="border-t bg-white">
+          <form
+            onSubmit={handleFormSubmit}
+            className="p-4 space-y-3"
+          >
             <FileUpload
               onFileSelect={handleFileSelect}
               onFileRemove={handleFileRemove}
@@ -177,8 +176,8 @@ export default function Home() {
                 {isLoading ? 'Thinking...' : 'Send'}
               </button>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </main>
   );
