@@ -173,8 +173,8 @@ export default function Home() {
           </div>
 
           <div className="border-t p-4">
-            <div className="flex gap-4">
-              <div className="w-48">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <div className="w-full sm:w-48">
                 <FileUpload
                   onFileSelect={handleFileSelect}
                   onFileRemove={handleFileRemove}
